@@ -1,0 +1,46 @@
+services:
+  postgres:
+    image: postgres:15
+    container_name: project-postgres-compose
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: taskmanager
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./backend
+    container_name: task-manager-backend-compose
+    environment:
+     DATABASE_URL: postgresql+psycopg2://postgres:postgres@postgres:5432/microservices_db
+    ports:
+      - "5000:5000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: task-manager-frontend-compose
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+    external: true
+    name: dc266c5216fc14fadbeac727bcbc7f0abc0c269ddd2ebe0cf022b7df72a8785c
